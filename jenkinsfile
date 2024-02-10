@@ -59,15 +59,5 @@ pipeline {
                 }
             }
         }
-        stage('Deploying Nginx Application') {
-            steps{
-                script{
-                    dir('aws-eks/config files') {
-                        sh 'aws eks update-kubeconfig --name my-eks-cluster'
-                        sh 'kubectl apply -f nginx-deployment.yaml'
-                    }
-                }
-            }
-        }
     }
 }
