@@ -476,6 +476,8 @@ We then view the cluster created through the console
 
 ![Screenshot (398)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/f7973a75-26e1-4b3f-98c2-66231beb8a7d)
 
+![Screenshot (404)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/2c5ad49b-a41c-4933-b40e-f4b21e43be4e)
+
 Following the setup of infrastructure resources, we will now proceed to utilize ArgoCD towards making kubernetes deployments more efficient.
 
 ## Step 4: Setup ArgoCD in EKS cluster
@@ -544,7 +546,7 @@ kind: Deployment
 metadata:
   name: my-deployment
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: my-app
