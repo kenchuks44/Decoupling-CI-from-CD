@@ -1,6 +1,8 @@
-## Deploying AWS EKS cluster using Terraform and Jenkins
-In this project, we explore the power of Infrastructure as Code tool, Terraform in seamlessly deploying infrastructure resources, helping us to reduce human errors while achieving greater agility, reliability and efficiency.
-Firstly, we deploy Terraform code to create EC2 instance and deploy Jenkins on it. Next, we authenticate to our AWS aaccount through AWS CLI, then create a Jenkins pipeline to deploy EKS cluster.
+## Decoupling CI from CD 
+In this project, we look at how ArgoCD, a CD tool based on GitOps aids in making continuous delivery to kubernetes more efficient. With ArgoCD, we gain visibility into the cluster as well as the application health, watch the cluster for changes, compare desired configuration in git repository with actual state in kubernetes cluster.
+For Continuous Integration, we explore the power of Infrastructure as Code tool, Terraform in seamlessly deploying infrastructure resources, helping us to reduce human errors while achieving greater agility, reliability and efficiency. Then, for Continuous Delivery, we explore the power of ArgoCD in deploying, updating, monitoring and scaling of applications running on kubernetes cluster.
+
+To begin, we create Terraform code to create EC2 instance and deploy Jenkins on it. Next, we authenticate to our AWS aaccount through AWS CLI, then create a Jenkins pipeline to deploy EKS cluster.
 
 ## Step 1: Setup pre-requisites
 Create an S3 bucket to serve as the remote backend. Having a remote backend to store terraform statefile, we eliminate possible conflict that could emanate from multiple modification of the file simultaneously as remote backend offers state locking which ensures only person makes changes to the terraform statefile at a time. Secondly, we create a key pair through the console which will be used to remotely access our EC2 instance
@@ -474,7 +476,124 @@ We then view the cluster created through the console
 
 ![Screenshot (398)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/f7973a75-26e1-4b3f-98c2-66231beb8a7d)
 
-Voila!!! We have successfully provisioned infrastructure resources automatically using Terraform and Jenkins. With these tools, we can seamlessly replicate this setup, thereby eliminating possible human errors, maintain infrastructure configurations, leading to more reliable and predictable infrastructure deployments.
+Following the setup of infrastructure resources, we will now proceed to utilize ArgoCD towards making kubernetes deployments more efficient.
+
+## Step 4: Setup ArgoCD in EKS cluster
+Firstly, we update the kubeconfig file for the EKS cluster, then proceed to install ArgoCD using the commands below:
+```
+aws eks update-kubeconfig --name <eks-cluster-name>
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+```
+
+![Screenshot (415)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/752971ec-dfb7-42b9-8ab3-ef1cb412747b)
+
+![Screenshot (417)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/7a11bbe0-9a6f-40a0-af37-6cd75897ab6b)
+
+Next, we verify the pods are running and make Argocd-server publicly accessible using a load balancer with the commands below
+```
+kubectl get pods -n argocd
+kubectl patch svc argo-server -n argocd -p '{"spec": {"type": "LoadBalancer"}}'
+```
+
+![Screenshot (418)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/24f64af7-4fe2-4e04-90d1-4e84c5aa93a4)
+
+With the Load Balancer created, we can access ArgoCD UI using the DNS name
+
+![Screenshot (421)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/c4b9c16c-7156-4e7d-8aca-fa422c61cd7c)
+
+For the ArgoCD UI initial login, default username is "admin" and the password is extracted using the command below
+```
+kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
+```
+
+![Screenshot (420)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/0256f0aa-a0d9-41bd-bcf1-30cc646230fd)
+
+## Step 5: Create Argo application configuration files and Kubernetes deployment files
+We create the argo application configuration file as below: (link to argocd-app-config repository: https://github.com/kenchuks44/argocd-app-config)
+```
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: myapp-argo-application
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://github.com/kenchuks44/argocd-app-config.git
+    targetRevision: HEAD
+    path: dev
+  destination: 
+    server: https://kubernetes.default.svc
+    namespace: myapp
+
+  syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
+
+    automated:
+      selfHeal: true
+      prune: true
+```
+
+Then, the deployment and service configuration files as below:
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+      - name: my-container
+        image: docker.io/kenchuks44/my-repo:jma-1.0
+        ports:
+        - containerPort: 8080
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+spec:
+  selector:
+    app: myapp
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+```
+
+Next, we then run the command below to deploy the application
+```
+kubectl apply -f application.yaml
+```
+![Screenshot (424)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/83dc64b0-7527-4b86-9db0-92baaccfaf5c)
+
+We then view the application on ArgoCD UI
+
+![Screenshot (424)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/91c929c8-0349-4cda-8744-7e57ec70a758)
+
+From the UI, we gain visibility into the cluster, monitor application health, easily rollback changes, etc.
+
+![Screenshot (427)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/d172027c-85e3-4bc2-b133-73b2f3271f39)
+
+With Git as a single source of truth for cluster state, when we make changes in the repo, ArgoCd compares the desired config in Git repository with actual state in k8s cluster and then, syncs whatever is in the git repository to the cluster
+
+Viola!!! We have successfully provisioned infrastructure resources automatically using Terraform and Jenkins and then, setup ArgoCD for better deploying, monitoring and updating of applications running on the kubernetes cluster
+
+
+
+
 
 
 
