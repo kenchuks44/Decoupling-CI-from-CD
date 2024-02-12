@@ -585,6 +585,8 @@ We then view the application on ArgoCD UI
 
 ![Screenshot (424)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/91c929c8-0349-4cda-8744-7e57ec70a758)
 
+![Screenshot (425)](https://github.com/kenchuks44/Decoupling-CI-from-CD-using-Terraform-Jenkins-and-ArgoCD/assets/88329191/fa6df623-085b-476d-bec2-6a377e0f1118)
+
 From the UI, we gain visibility into the cluster, monitor application health, easily rollback changes, etc.
 
 ![Screenshot (427)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/d172027c-85e3-4bc2-b133-73b2f3271f39)
