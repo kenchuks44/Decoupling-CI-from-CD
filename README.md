@@ -2,7 +2,7 @@
 In this project, we look at how ArgoCD, a CD tool based on GitOps aids in making continuous delivery to kubernetes more efficient. With ArgoCD, we gain visibility into the cluster as well as the application health, watch the cluster for changes, compare desired configuration in git repository with actual state in kubernetes cluster.
 For Continuous Integration, we create Terraform code in Jenkins to seamlessly deploy infrastructure resources, helping us to reduce human errors while achieving greater agility, reliability and efficiency. Then, for Continuous Delivery, we explore the power of ArgoCD in deploying, updating, monitoring and scaling of applications running on kubernetes cluster.
 
-Architecture
+## Architecture
 
 ![Screenshot (438)](https://github.com/kenchuks44/Decoupling-CI-from-CD/assets/88329191/ac573445-e85e-4697-9e44-ae42c3e6a1e4)
 
