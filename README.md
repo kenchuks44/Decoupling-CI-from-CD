@@ -9,7 +9,7 @@ For Continuous Integration, we create Terraform code in Jenkins to seamlessly de
 To begin, we create Terraform code to create EC2 instance and deploy Jenkins on it. Next, we authenticate to our AWS aaccount through AWS CLI, then create a Jenkins pipeline to deploy EKS cluster.
 
 ## Step 1: Setup pre-requisites
-Create an S3 bucket to serve as the remote backend. Having a remote backend to store terraform statefile, we eliminate possible conflict that could emanate from multiple modification of the file simultaneously as remote backend offers state locking which ensures only person makes changes to the terraform statefile at a time. Secondly, we create a key pair through the console which will be used to remotely access our EC2 instance
+Create an S3 bucket to serve as the remote backend. By having a remote backend to store terraform statefile, we eliminate possible conflict that could emanate from multiple modification of the file simultaneously as remote backend offers state locking which ensures only person makes changes to the terraform statefile at a time. Secondly, we create a key pair through the console which will be used to remotely access our EC2 instance
 
 ![Screenshot (356)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/ceaeff14-defb-4515-84ec-b157c89bf5ef)
 
@@ -23,7 +23,7 @@ aws configure
 
 ![Screenshot (357)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/5be4f57d-58e5-465f-873d-93cc32973119)
 
-Terraform code to create instance and other dependent resources (VPC and Security Group). We will make use of existing modules where necessary
+Next, we create Terraform code to create instance and other dependent resources (VPC and Security Group). We will make use of existing modules where necessary
 
 provider.tf (cloud provider in use)
 ```
@@ -282,7 +282,7 @@ Next, we parametrize the project. This allows us make a choice of actions during
 
 ![Screenshot (393)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/da7b7b94-be60-435c-a5d0-3fe442f6dc5a)
 
-Next, we add our credentials to Jenkins to enable Jenkins authenticate to the account successfully
+Next, we add our credentials to Jenkins to enable Jenkins authenticate to our account successfully
 
 ![Screenshot (395)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/d79960b8-dfc7-4968-84f5-4fad10acf9bc)
 
@@ -508,7 +508,7 @@ With the Load Balancer created, we can access ArgoCD UI using the DNS name
 
 ![Screenshot (421)](https://github.com/kenchuks44/Deploying-EKS-cluster-using-Terraform-and-Jenkins/assets/88329191/c4b9c16c-7156-4e7d-8aca-fa422c61cd7c)
 
-For the ArgoCD UI initial login, default username is "admin" and the password is extracted using the command below
+For the ArgoCD UI initial login, default username is "admin" and the initial password is extracted using the command below
 ```
 kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d
 ```
